@@ -24,6 +24,10 @@ export function createGatewayHooksRequestHandler(params: {
   const dispatchWakeHook = (value: { text: string; mode: "now" | "next-heartbeat" }) => {
     const sessionKey = resolveMainSessionKeyFromConfig();
     enqueueSystemEvent(value.text, { sessionKey });
+    logHooks.info("wake hook: event enqueued", {
+      mode: value.mode,
+      textPreview: value.text.slice(0, 80),
+    });
     if (value.mode === "now") {
       requestHeartbeatNow({ reason: "hook:wake" });
     }

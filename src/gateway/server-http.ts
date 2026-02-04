@@ -12,6 +12,7 @@ import type { createSubsystemLogger } from "../logging/subsystem.js";
 import { resolveAgentAvatar } from "../agents/identity-avatar.js";
 import { handleA2uiHttpRequest } from "../canvas-host/a2ui.js";
 import { loadConfig } from "../config/config.js";
+import { hasHeartbeatWakeHandler } from "../infra/heartbeat-wake.js";
 import { handleSlackHttpRequest } from "../slack/http/index.js";
 import {
   handleControlUiAvatarRequest,
@@ -130,7 +131,11 @@ export function createHooksRequestHandler(
         return true;
       }
       dispatchWakeHook(normalized.value);
-      sendJson(res, 200, { ok: true, mode: normalized.value.mode });
+      sendJson(res, 200, {
+        ok: true,
+        mode: normalized.value.mode,
+        heartbeatAvailable: hasHeartbeatWakeHandler(),
+      });
       return true;
     }
 
@@ -168,7 +173,11 @@ export function createHooksRequestHandler(
               text: mapped.action.text,
               mode: mapped.action.mode,
             });
-            sendJson(res, 200, { ok: true, mode: mapped.action.mode });
+            sendJson(res, 200, {
+              ok: true,
+              mode: mapped.action.mode,
+              heartbeatAvailable: hasHeartbeatWakeHandler(),
+            });
             return true;
           }
           const channel = resolveHookChannel(mapped.action.channel);
