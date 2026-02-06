@@ -427,19 +427,17 @@ export async function runHeartbeatOnce(opts: {
 
   // Skip heartbeat if HEARTBEAT.md exists but has no actionable content.
   // This saves API calls/costs when the file is effectively empty (only comments/headers).
-  // EXCEPTION: Don't skip for exec events or cron events - they have pending system events
-  // to process regardless of HEARTBEAT.md content.
+  // EXCEPTION: Don't skip for exec events, cron events, or hook wakes - they have pending
+  // system events to process regardless of HEARTBEAT.md content.
   const isExecEventReason = opts.reason === "exec-event";
   const isCronEventReason = Boolean(opts.reason?.startsWith("cron:"));
+  const isHookWakeReason = typeof opts.reason === "string" && opts.reason.startsWith("hook:");
+  const isEventTriggered = isExecEventReason || isCronEventReason || isHookWakeReason;
   const workspaceDir = resolveAgentWorkspaceDir(cfg, agentId);
   const heartbeatFilePath = path.join(workspaceDir, DEFAULT_HEARTBEAT_FILENAME);
   try {
     const heartbeatFileContent = await fs.readFile(heartbeatFilePath, "utf-8");
-    if (
-      isHeartbeatContentEffectivelyEmpty(heartbeatFileContent) &&
-      !isExecEventReason &&
-      !isCronEventReason
-    ) {
+    if (isHeartbeatContentEffectivelyEmpty(heartbeatFileContent) && !isEventTriggered) {
       emitHeartbeatEvent({
         status: "skipped",
         reason: "empty-heartbeat-file",
