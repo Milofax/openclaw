@@ -2,6 +2,10 @@
 // prefixed to the next prompt. We intentionally avoid persistence to keep
 // events ephemeral. Events are session-scoped and require an explicit key.
 
+import { createSubsystemLogger } from "../logging/subsystem.js";
+
+const log = createSubsystemLogger("infra/system-events");
+
 export type SystemEvent = { text: string; ts: number };
 
 const MAX_EVENTS = 20;
@@ -72,7 +76,12 @@ export function enqueueSystemEvent(text: string, options: SystemEventOptions) {
   entry.lastText = cleaned;
   entry.queue.push({ text: cleaned, ts: Date.now() });
   if (entry.queue.length > MAX_EVENTS) {
-    entry.queue.shift();
+    const dropped = entry.queue.shift();
+    log.warn("system event queue overflow: oldest event dropped", {
+      sessionKey: key,
+      droppedText: dropped?.text?.slice(0, 80),
+      queueSize: entry.queue.length,
+    });
   }
 }
 
