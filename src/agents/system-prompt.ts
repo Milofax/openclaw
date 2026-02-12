@@ -65,6 +65,23 @@ function buildMemorySection(params: {
   return lines;
 }
 
+function buildGraphitiSection(params: { isMinimal: boolean; availableTools: Set<string> }) {
+  if (params.isMinimal) {
+    return [];
+  }
+  const hasGraphiti = [...params.availableTools].some((tool) => tool.startsWith("graphiti__"));
+  if (!hasGraphiti) {
+    return [];
+  }
+  return [
+    "## Knowledge Graph (Graphiti)",
+    "A persistent knowledge graph is available via Graphiti MCP tools (graphiti__*).",
+    "Before answering questions about people, decisions, preferences, learnings, or prior knowledge: run graphiti__search_nodes first, then graphiti__search_memory_facts if relationships matter.",
+    "Use graphiti__add_memory to store new learnings, decisions, contacts, and facts — always include source_description.",
+    "",
+  ];
+}
+
 function buildUserIdentitySection(ownerLine: string | undefined, isMinimal: boolean) {
   if (!ownerLine || isMinimal) {
     return [];
@@ -365,6 +382,10 @@ export function buildAgentSystemPrompt(params: {
     availableTools,
     citationsMode: params.memoryCitationsMode,
   });
+  const graphitiSection = buildGraphitiSection({
+    isMinimal,
+    availableTools,
+  });
   const docsSection = buildDocsSection({
     docsPath: params.docsPath,
     isMinimal,
@@ -423,6 +444,7 @@ export function buildAgentSystemPrompt(params: {
     "",
     ...skillsSection,
     ...memorySection,
+    ...graphitiSection,
     // Skip self-update for subagent/none modes
     hasGateway && !isMinimal ? "## OpenClaw Self-Update" : "",
     hasGateway && !isMinimal
