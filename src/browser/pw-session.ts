@@ -295,6 +295,10 @@ function observeContext(context: BrowserContext) {
   observedContexts.add(context);
   ensureContextState(context);
 
+  // Grant clipboard permissions so agents can use navigator.clipboard.read/write
+  // (e.g. TradingView "copy image" workflow).  Same pattern as geolocation grants.
+  context.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+
   for (const page of context.pages()) {
     ensurePageState(page);
   }
